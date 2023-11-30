@@ -1,0 +1,64 @@
+---
+title: "Assignment 5 BA 64060"
+author: "Samantha Ellis"
+date: "2023-11-29"
+output: html_document
+---
+
+Part One
+```{r}
+cereal<- na.omit(Cereals) ##Omitted missing values
+head(cereal)
+Numcereal<- cereal[, unlist(lapply(cereal, is.numeric))]  ##Removed values that were not numeric
+NormCereal<- scale(Numcereal[, -1])   ##Scaled/normalized dataset
+
+library(cluster)
+hc_singleCereal<- agnes(NormCereal, method = "single")
+hc_completeCereal<- agnes(NormCereal, method = "complete")
+hc_averageCereal<- agnes(NormCereal, method = "average")
+hc_WardCereal<- agnes(NormCereal, method = "ward")
+
+print(hc_singleCereal$ac)
+print(hc_completeCereal$ac)
+print(hc_averageCereal$ac)
+print(hc_WardCereal$ac)
+```
+The best method for linkage would be the Ward method, because the agglomerative coefficient is the closest to 1, which suggests strong clustering. 
+
+
+
+
+Part Two
+```{r}
+pltree(hc_WardCereal, cex=0.6, hang=-1, main = "Dendrogram of Ward")
+rect.hclust(hc_WardCereal, k=3, border = 1:3)
+```
+Visually examining the dendrogram, it looks as though there should be 3 clusters.
+
+
+
+
+
+Part Three
+```{r}
+partitionA<- sample(1:2, nrow(Numcereal), replace = TRUE)
+partitionB<- 3 - partitionA
+
+clusterA<- cutree(hc_WardCereal, k=3)
+clusterB<- cutree(hc_WardCereal, partitionB)
+
+consistency<- sum(clusterA==clusterB)/length(clusterB)
+consistency
+```
+There is a moderate amount of stability and clustering within this structure due to the consistency sum being 0.534.
+
+
+
+
+
+Part Four
+First, what makes a cereal "Healthy" needs to be defined. Since no definition is given, I am creating one, in which healthy cereal has fiber > 3 and protein > 3. The data should not be normalized because we are looking for specific values within the catorgies/columns to filter into the partitions. Based on this definition of a healthy cereal, only 3 cereals are considered healthy. 
+```{r}
+HealthyCereal<- clusterA[which(cereal$protein>3 & cereal$fiber>3)]
+cat("Healthy Cereals Clustering", HealthyCereal, "/n")
+```
